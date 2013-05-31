@@ -259,24 +259,26 @@ module.exports = function (
 	}
 
 	Session.prototype.mkdirp = function (path, cb) {
-		assert(typeof(path) === 'string', 'path is required')
+        assert(typeof(path) === 'string', 'path is required')
 
-		cb = cb || defaults.create
-		this.exists(
-			path,
-			false,
-			function (err, exists) {
-				if (exists) {
-					return cb(null, path)
-				}
-				this.mkdirp(
-					path + '/..',
-					function (err, actualPath) {
-						this.create(path, '', cb)
-					}.bind(this)
-				)
-			}.bind(this)
-		)
+        cb = cb || defaults.create
+        this.exists(
+            path,
+            false,
+            function (err, exists) {
+                if (exists) {
+                    return cb(null, path)
+                }
+
+                var newPath = path.substring(0, path.lastIndexOf('/'));
+                this.mkdirp(
+                    newPath,
+                    function (err, actualPath) {
+                        this.create(path, '', cb)
+                    }.bind(this)
+                )
+            }.bind(this)
+        )
 	}
 
 	Session.prototype.rmrf = function (path, cb) {
@@ -359,7 +361,7 @@ module.exports = function (
 	// internal API
 
 	Session.prototype._chroot = function (path) {
-        path = [this.root, path].join('/').replace(/\/\//g, '/');
+        path = [this.root, path].join('/').replace(/[\/]+/g, '/');
 		if (path.length > 1 && path[path.length - 1] === '/') {
 			path = path.substring(0, path.length - 1)
 		}
